@@ -1,0 +1,91 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Roles de quien consume la API (se usa con el kit de JWT)
+enum Role {
+  RECEPCIONISTA
+  MEDICO
+  GERENCIA
+}
+
+// Ciclo de vida de una cita: nace PROGRAMADA y el médico la cierra
+enum AppointmentStatus {
+  PROGRAMADA
+  COMPLETADA
+  CANCELADA
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String // hash, nunca texto plano
+  role      Role
+  medic     Medic? // solo si role = MEDICO
+  createdAt DateTime @default(now())
+
+  @@map("users")
+}
+
+model Specialty {
+  id     Int     @id @default(autoincrement())
+  name   String  @unique
+  medics Medic[]
+
+  @@map("specialties")
+}
+
+model Patient {
+  id           Int           @id @default(autoincrement())
+  name         String
+  email        String        @unique
+  birthDate    DateTime      @db.Date
+  phone        String?
+  createdAt    DateTime      @default(now())
+  appointments Appointment[]
+
+  @@map("patients")
+}
+
+model Medic {
+  id           Int           @id @default(autoincrement())
+  name         String
+  email        String        @unique
+  specialty    Specialty     @relation(fields: [specialtyId], references: [id])
+  specialtyId  Int
+  user         User?         @relation(fields: [userId], references: [id])
+  userId       Int?          @unique
+  createdAt    DateTime      @default(now())
+  appointments Appointment[]
+
+  @@index([specialtyId])
+  @@map("medics")
+}
+
+model Appointment {
+  id        Int               @id @default(autoincrement())
+  date      DateTime
+  reason    String
+  notes     String?
+  status    AppointmentStatus @default(PROGRAMADA)
+  medic     Medic             @relation(fields: [medicId], references: [id])
+  medicId   Int
+  patient   Patient           @relation(fields: [patientId], references: [id])
+  patientId Int
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  // Evita el "cruce de horarios": un médico no puede tener dos citas a la misma hora
+  @@unique([medicId, date])
+  @@index([patientId])
+  @@index([date])
+  @@map("appointments")
+}
