@@ -1,0 +1,94 @@
+### Clínica Salud Integral — peticiones de prueba
+### Úsalo con la extensión "REST Client" (VS Code) o cópialas a Postman/Thunder Client.
+
+@base = http://localhost:3000/api
+
+### ---------- Salud ----------
+GET http://localhost:3000/health
+
+### ---------- Especialidades ----------
+GET {{base}}/specialties
+
+###
+POST {{base}}/specialties
+Content-Type: application/json
+
+{ "name": "Neurología" }
+
+### ---------- Médicos ----------
+GET {{base}}/medics
+
+### Filtrar por especialidad (búsqueda parcial, sin importar mayúsculas)
+GET {{base}}/medics?specialty=cardio
+
+### Filtrar por id de especialidad
+GET {{base}}/medics?specialtyId=2
+
+###
+POST {{base}}/medics
+Content-Type: application/json
+
+{ "name": "Dr. Luis Gómez", "email": "luis.gomez@saludintegral.mx", "specialtyId": 1 }
+
+### Agenda del médico por rango de fechas (ambos días inclusivos)
+GET {{base}}/medics/1/appointments?from=2026-11-01&to=2026-11-30
+
+### Agenda filtrando además por estado
+GET {{base}}/medics/1/appointments?from=2026-11-01&to=2026-11-30&status=PROGRAMADA
+
+### ---------- Pacientes ----------
+GET {{base}}/patients
+
+### Expediente: datos + historial de citas
+GET {{base}}/patients/1
+
+###
+POST {{base}}/patients
+Content-Type: application/json
+
+{ "name": "Sofía Ramírez", "email": "sofia@mail.com", "birthDate": "1998-07-21", "phone": "5512345678" }
+
+### Debe fallar (400): correo inválido y fecha futura
+POST {{base}}/patients
+Content-Type: application/json
+
+{ "name": "Error", "email": "no-es-correo", "birthDate": "2099-01-01" }
+
+### ---------- Citas ----------
+GET {{base}}/appointments
+
+###
+GET {{base}}/appointments/1
+
+### Agendar (la fecha debe ser futura)
+POST {{base}}/appointments
+Content-Type: application/json
+
+{
+  "date": "2026-12-01T10:30:00-06:00",
+  "reason": "Consulta general",
+  "notes": "Primera visita",
+  "medicId": 1,
+  "patientId": 1
+}
+
+### Debe fallar (400): fecha en el pasado
+POST {{base}}/appointments
+Content-Type: application/json
+
+{ "date": "2020-01-01T10:00:00Z", "reason": "Pasado", "medicId": 1, "patientId": 1 }
+
+### Cambiar estado (solo desde PROGRAMADA)
+PATCH {{base}}/appointments/1/status
+Content-Type: application/json
+
+{ "status": "COMPLETADA" }
+
+### ---------- Reportes (Gerencia) ----------
+GET {{base}}/reports/appointments-by-specialty
+
+### Con rango de fechas opcional
+GET {{base}}/reports/appointments-by-specialty?from=2026-11-01&to=2026-11-30
+
+### Corte operativo diario
+GET {{base}}/reports/daily?date=2026-12-01

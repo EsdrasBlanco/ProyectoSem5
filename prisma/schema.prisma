@@ -30,7 +30,7 @@ model User {
   password  String // hash, nunca texto plano
   role      Role
   medic     Medic? // solo si role = MEDICO
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @db.Date
 
   @@map("users")
 }
@@ -49,7 +49,7 @@ model Patient {
   email        String        @unique
   birthDate    DateTime      @db.Date
   phone        String?
-  createdAt    DateTime      @default(now())
+  createdAt    DateTime      @default(now()) @db.Date
   appointments Appointment[]
 
   @@map("patients")
@@ -63,7 +63,7 @@ model Medic {
   specialtyId  Int
   user         User?         @relation(fields: [userId], references: [id])
   userId       Int?          @unique
-  createdAt    DateTime      @default(now())
+  createdAt    DateTime      @default(now()) @db.Date
   appointments Appointment[]
 
   @@index([specialtyId])
@@ -80,8 +80,8 @@ model Appointment {
   medicId   Int
   patient   Patient           @relation(fields: [patientId], references: [id])
   patientId Int
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
+  createdAt DateTime          @default(now()) @db.Date
+  updatedAt DateTime          @updatedAt @db.Date
 
   // Evita el "cruce de horarios": un médico no puede tener dos citas a la misma hora
   @@unique([medicId, date])
