@@ -61,34 +61,3 @@ export async function getMedicAgenda(req: Request, res: Response) {
 
   res.status(200).json({ data: { medic, appointments } });
 }
-
-
-// GET /api/medics/:id/appointments?from=YYYY-MM-DD&to=YYYY-MM-DD&status=PROGRAMADA
-// Agenda del médico filtrada por rango de fechas (ambos extremos inclusivos)
-export async function getMedicAgenda(req: Request, res: Response) {
-  const { id } = idParamSchema.parse(req.params);
-  const { from, to, status } = agendaQuerySchema.parse(req.query);
-
-  const medic = await prisma.medic.findUnique({
-    where: { id },
-    include: { specialty: true },
-  });
-  if (!medic) throw new HttpError(404, "Médico no encontrado");
-
-  const appointments = await prisma.appointment.findMany({
-    where: {
-      medicId: id,
-      ...(status && { status }),
-      date: {
-        ...(from && { gte: startOfDay(from) }),
-        ...(to && { lt: startOfNextDay(to) }),
-      },
-    },
-    orderBy: { date: "asc" },
-    include: {
-      patient: { select: { id: true, name: true, email: true, phone: true } },
-    },
-  });
-
-  res.status(200).json({ data: { medic, appointments } });
-}
