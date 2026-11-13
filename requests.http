@@ -2,66 +2,123 @@
 ### Úsalo con la extensión "REST Client" (VS Code) o cópialas a Postman/Thunder Client.
 
 @base = http://localhost:3000/api
+@tokenRecepcion = REEMPLAZA_CON_TOKEN_RECEPCIONISTA
+@tokenMedico = REEMPLAZA_CON_TOKEN_MEDICO
+@tokenGerencia = REEMPLAZA_CON_TOKEN_GERENCIA
 
 ### ---------- Salud ----------
 GET http://localhost:3000/health
 
+### ---------- Autenticación (JWT) ----------
+### Login como RECEPCIONISTA (creado en pnpm db:seed)
+# @name loginRecepcion
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "email": "recepcion@saludintegral.mx", "password": "123456" }
+
+### Login como MEDICO (creado en pnpm db:seed)
+# @name loginMedico
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "email": "laura.mendez@saludintegral.mx", "password": "123456" }
+
+### Login como GERENCIA (creado en pnpm db:seed)
+# @name loginGerencia
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "email": "gerencia@saludintegral.mx", "password": "123456" }
+
+### Registrar un usuario nuevo
+POST {{base}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "nuevo.recepcion@saludintegral.mx",
+  "password": "123456",
+  "role": "RECEPCIONISTA"
+}
+
+### Consultar perfil del usuario autenticado
+GET {{base}}/auth/me
+Authorization: Bearer {{tokenGerencia}}
+
 ### ---------- Especialidades ----------
+### Público
 GET {{base}}/specialties
 
-###
+### Crear especialidad (Rol: GERENCIA)
 POST {{base}}/specialties
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 { "name": "Neurología" }
 
 ### ---------- Médicos ----------
+### Listar médicos (Roles: RECEPCIONISTA, MEDICO, GERENCIA)
 GET {{base}}/medics
+Authorization: Bearer {{tokenRecepcion}}
 
 ### Filtrar por especialidad (búsqueda parcial, sin importar mayúsculas)
 GET {{base}}/medics?specialty=cardio
+Authorization: Bearer {{tokenRecepcion}}
 
 ### Filtrar por id de especialidad
 GET {{base}}/medics?specialtyId=2
+Authorization: Bearer {{tokenRecepcion}}
 
-###
+### Alta de médico (Rol: GERENCIA)
 POST {{base}}/medics
+Authorization: Bearer {{tokenGerencia}}
 Content-Type: application/json
 
 { "name": "Dr. Luis Gómez", "email": "luis.gomez@saludintegral.mx", "specialtyId": 1 }
 
-### Agenda del médico por rango de fechas (ambos días inclusivos)
+### Agenda del médico por rango de fechas (Roles: MEDICO, GERENCIA)
 GET {{base}}/medics/1/appointments?from=2026-11-01&to=2026-11-30
+Authorization: Bearer {{tokenMedico}}
 
 ### Agenda filtrando además por estado
 GET {{base}}/medics/1/appointments?from=2026-11-01&to=2026-11-30&status=PROGRAMADA
+Authorization: Bearer {{tokenMedico}}
 
 ### ---------- Pacientes ----------
+### Listar pacientes (Roles: RECEPCIONISTA, MEDICO, GERENCIA)
 GET {{base}}/patients
+Authorization: Bearer {{tokenRecepcion}}
 
-### Expediente: datos + historial de citas
+### Expediente: datos + historial de citas (Roles: RECEPCIONISTA, MEDICO, GERENCIA)
 GET {{base}}/patients/1
+Authorization: Bearer {{tokenMedico}}
 
-###
+### Alta de paciente (Roles: RECEPCIONISTA, GERENCIA)
 POST {{base}}/patients
+Authorization: Bearer {{tokenRecepcion}}
 Content-Type: application/json
 
 { "name": "Sofía Ramírez", "email": "sofia@mail.com", "birthDate": "1998-07-21", "phone": "5512345678" }
 
 ### Debe fallar (400): correo inválido y fecha futura
 POST {{base}}/patients
+Authorization: Bearer {{tokenRecepcion}}
 Content-Type: application/json
 
 { "name": "Error", "email": "no-es-correo", "birthDate": "2099-01-01" }
 
 ### ---------- Citas ----------
+### Listar citas (Roles: RECEPCIONISTA, MEDICO, GERENCIA)
 GET {{base}}/appointments
+Authorization: Bearer {{tokenRecepcion}}
 
-###
+### Detalle de cita (Roles: RECEPCIONISTA, MEDICO, GERENCIA)
 GET {{base}}/appointments/1
+Authorization: Bearer {{tokenRecepcion}}
 
-### Agendar (la fecha debe ser futura)
+### Agendar cita (Roles: RECEPCIONISTA, GERENCIA — la fecha debe ser futura)
 POST {{base}}/appointments
+Authorization: Bearer {{tokenRecepcion}}
 Content-Type: application/json
 
 {
@@ -74,21 +131,26 @@ Content-Type: application/json
 
 ### Debe fallar (400): fecha en el pasado
 POST {{base}}/appointments
+Authorization: Bearer {{tokenRecepcion}}
 Content-Type: application/json
 
 { "date": "2020-01-01T10:00:00Z", "reason": "Pasado", "medicId": 1, "patientId": 1 }
 
-### Cambiar estado (solo desde PROGRAMADA)
+### Cambiar estado (Roles: MEDICO, GERENCIA — solo desde PROGRAMADA)
 PATCH {{base}}/appointments/1/status
+Authorization: Bearer {{tokenMedico}}
 Content-Type: application/json
 
 { "status": "COMPLETADA" }
 
 ### ---------- Reportes (Gerencia) ----------
 GET {{base}}/reports/appointments-by-specialty
+Authorization: Bearer {{tokenGerencia}}
 
 ### Con rango de fechas opcional
 GET {{base}}/reports/appointments-by-specialty?from=2026-11-01&to=2026-11-30
+Authorization: Bearer {{tokenGerencia}}
 
 ### Corte operativo diario
 GET {{base}}/reports/daily?date=2026-12-01
+Authorization: Bearer {{tokenGerencia}}

@@ -3,6 +3,7 @@ import type { Application } from "express";
 import cors from "cors";
 import swaggerUi from "swagger-ui-express";
 import { openApiSpec } from "./config/swagger";
+import authRouter from "./routes/authRoute";
 import patientRouter from "./routes/patientRoute";
 import medicRouter from "./routes/medicRoute";
 import appointmentRouter from "./routes/appointmentRoute";
@@ -32,6 +33,7 @@ app.get("/health", (_req, res) => {
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiSpec));
 
+app.use("/api", authRouter);
 app.use("/api", patientRouter);
 app.use("/api", medicRouter);
 app.use("/api", appointmentRouter);
