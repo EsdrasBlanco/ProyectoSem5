@@ -1,4 +1,5 @@
 // Datos de prueba: pnpm db:seed
+import bcrypt from "bcryptjs";
 import { prisma } from "../src/config/prisma";
 
 async function main() {
@@ -26,7 +27,50 @@ async function main() {
     await prisma.patient.upsert({ where: { email: p.email }, update: {}, create: p });
   }
 
-  console.log("Seed completado");
+  // Usuarios de prueba para JWT (contraseña: 123456)
+  const passwordHash = await bcrypt.hash("123456", 10);
+
+  await prisma.user.upsert({
+    where: { email: "recepcion@saludintegral.mx" },
+    update: { password: passwordHash, role: "RECEPCIONISTA" },
+    create: {
+      email: "recepcion@saludintegral.mx",
+      password: passwordHash,
+      role: "RECEPCIONISTA",
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: "gerencia@saludintegral.mx" },
+    update: { password: passwordHash, role: "GERENCIA" },
+    create: {
+      email: "gerencia@saludintegral.mx",
+      password: passwordHash,
+      role: "GERENCIA",
+    },
+  });
+
+  // Usuarios para cada médico vinculados a su registro en la tabla medics
+  for (const m of medics) {
+    const medicRecord = await prisma.medic.findUnique({ where: { email: m.email } });
+    if (medicRecord) {
+      const medicoUser = await prisma.user.upsert({
+        where: { email: m.email },
+        update: { password: passwordHash, role: "MEDICO" },
+        create: {
+          email: m.email,
+          password: passwordHash,
+          role: "MEDICO",
+        },
+      });
+      await prisma.medic.update({
+        where: { id: medicRecord.id },
+        data: { userId: medicoUser.id },
+      });
+    }
+  }
+
+  console.log("Seed completado (incluyendo usuarios de prueba para RECEPCIONISTA, MEDICO y GERENCIA)");
 }
 
 main()

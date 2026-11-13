@@ -25,8 +25,8 @@ export async function appointmentsBySpecialty(req: Request, res: Response) {
            s.name            AS "specialty",
            COUNT(a.id)::int  AS "totalAppointments"
     FROM specialties s
-    LEFT JOIN medics m       ON m."specialtyId" = s.id
-    LEFT JOIN appointments a ON a."medicId" = m.id ${fromFilter} ${toFilter}
+    INNER JOIN medics m       ON m."specialtyId" = s.id
+    INNER JOIN appointments a ON a."medicId" = m.id ${fromFilter} ${toFilter}
     GROUP BY s.id, s.name
     ORDER BY "totalAppointments" DESC, s.name ASC
   `;

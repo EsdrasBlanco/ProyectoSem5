@@ -38,6 +38,10 @@ export async function getMedicAgenda(req: Request, res: Response) {
   const { id } = idParamSchema.parse(req.params);
   const { from, to, status } = agendaQuerySchema.parse(req.query);
 
+  if (req.user?.role === "MEDICO" && req.user.medicId && req.user.medicId !== id) {
+    throw new HttpError(403, "Acceso denegado: solo puedes consultar tu propia agenda médica");
+  }
+
   const medic = await prisma.medic.findUnique({
     where: { id },
     include: { specialty: true },

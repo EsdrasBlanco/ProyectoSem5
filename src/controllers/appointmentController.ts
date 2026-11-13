@@ -54,6 +54,17 @@ export async function updateAppointmentStatus(req: Request, res: Response) {
   const appointment = await prisma.appointment.findUnique({ where: { id } });
   if (!appointment) throw new HttpError(404, "Cita no encontrada");
 
+  if (
+    req.user?.role === "MEDICO" &&
+    req.user.medicId &&
+    appointment.medicId !== req.user.medicId
+  ) {
+    throw new HttpError(
+      403,
+      "Acceso denegado: solo el médico asignado a esta cita puede actualizar su estado",
+    );
+  }
+
   if (appointment.status !== "PROGRAMADA") {
     throw new HttpError(
       409,

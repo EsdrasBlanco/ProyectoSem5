@@ -5,12 +5,33 @@ import {
   createAppointment,
   updateAppointmentStatus,
 } from "../controllers/appointmentController";
+import { authenticate, authorize } from "../middlewares/authMiddleware";
 
 const router = Router();
 
-router.get("/appointments", getAppointments);
-router.get("/appointments/:id", getAppointmentById);
-router.post("/appointments", createAppointment); // TODO JWT: RECEPCIONISTA
-router.patch("/appointments/:id/status", updateAppointmentStatus); // TODO JWT: MEDICO
+router.get(
+  "/appointments",
+  authenticate,
+  authorize("RECEPCIONISTA", "MEDICO", "GERENCIA"),
+  getAppointments,
+);
+router.get(
+  "/appointments/:id",
+  authenticate,
+  authorize("RECEPCIONISTA", "MEDICO", "GERENCIA"),
+  getAppointmentById,
+);
+router.post(
+  "/appointments",
+  authenticate,
+  authorize("RECEPCIONISTA", "GERENCIA"),
+  createAppointment,
+);
+router.patch(
+  "/appointments/:id/status",
+  authenticate,
+  authorize("MEDICO", "GERENCIA"),
+  updateAppointmentStatus,
+);
 
 export default router;
